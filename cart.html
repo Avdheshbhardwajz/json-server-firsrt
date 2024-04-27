@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>cart</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      #cart-items {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 20px;
+      }
+
+      .cart-item {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+      }
+
+      .cart-item img {
+        width: 100%;
+        height: auto;
+        border-radius: 5px;
+      }
+
+      .cart-item h2 {
+        margin-top: 0;
+      }
+
+      .cart-item button {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      .cart-item button:hover {
+        background-color: #d32f2f;
+      }
+    </style>
+  </head>
+  <body>
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Cart</title>
+        <link rel="stylesheet" href="styles.css" />
+        <!-- Include your CSS file -->
+      </head>
+      <body>
+        <h1>Cart</h1>
+        <div id="cart-items"></div>
+        <!-- Container for cart items -->
+        <button id="checkout-btn">Proceed to Checkout</button>
+
+        <script src="script.js"></script>
+        <!-- Include your JavaScript file -->
+      </body>
+    </html>
+
+    <script>
+      // Function to fetch cart items for the logged-in user
+      async function fetchCartItems() {
+        try {
+          // Get the logged-in user's information from localStorage
+          const loggedInUser = JSON.parse(localStorage.getItem("user"));
+
+          // Fetch the user's cart data from the server
+          const response = await fetch(
+            `http://localhost:3000/allUsersCart/${loggedInUser.id}`
+          );
+          const cartItems = await response.json();
+
+          // Render the cart items on the cart page
+          renderCartItems(cartItems);
+        } catch (error) {
+          console.error("Error fetching cart items:", error);
+        }
+      }
+
+      // Function to render cart items on the cart page
+      function renderCartItems(cartItems) {
+        const cartItemsContainer = document.getElementById("cart-items");
+        cartItemsContainer.innerHTML = ""; // Clear previous content
+
+        cartItems.forEach((item) => {
+          const cartItemElement = document.createElement("div");
+          cartItemElement.classList.add("cart-item");
+          cartItemElement.innerHTML = `
+            <img class="product-image" src="${item.src}" alt="${item.title}">
+            <div>
+                <h2 class="product-title">${item.title}</h2>
+                <p class="product-price">Price: ${item.price}</p>
+                <p class="product-ratings">Ratings: ${item.ratings}</p>
+            </div>
+            <button onclick="removeFromCart(${item.productId})">Remove</button>
+        `;
+          cartItemsContainer.appendChild(cartItemElement);
+        });
+      }
+
+      // Function to remove a product from the cart
+      async function removeFromCart(productId) {
+        try {
+          // Get the logged-in user's information from localStorage
+          const loggedInUser = JSON.parse(localStorage.getItem("user"));
+
+          // Fetch the user's cart data from the server
+          let response = await fetch(
+            `http://localhost:3000/allUsersCart/${loggedInUser.id}`
+          );
+          let cartItems = await response.json();
+
+          // Remove the product from the user's cart
+          cartItems = cartItems.filter((item) => item.productId !== productId);
+
+          // Update the user's cart data on the server
+          response = await fetch(
+            `http://localhost:3000/allUsersCart/${loggedInUser.id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(cartItems),
+            }
+          );
+
+          if (response.ok) {
+            alert("Product removed from cart successfully!");
+            // Refresh cart items after removal
+            fetchCartItems();
+          } else {
+            throw new Error("Failed to remove product from cart.");
+          }
+        } catch (error) {
+          console.error("Error removing product from cart:", error);
+        }
+      }
+
+      // Fetch cart items when the cart page loads
+      fetchCartItems();
+    </script>
+  </body>
+</html>
